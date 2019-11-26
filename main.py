@@ -4,6 +4,7 @@
 #public module
 import os
 import re
+import configparser
 from openpyxl import Workbook
 
 #privite module
@@ -53,7 +54,7 @@ def write_xls(path,data):
 
 
 
-def one_device_search(dev_ip,interfaces,expressions,not_found_return,output):
+def one_device_search(dev_ip,user,password,interfaces,expressions,not_found_return,cmd,output):
 	'''从一台设备查询接口信息
 	形参：
 	dev_ip:设备的管理地址 str
@@ -62,9 +63,10 @@ def one_device_search(dev_ip,interfaces,expressions,not_found_return,output):
 	not_found_return：查询不到时的返回值列表 如['not_found_interval','not_found_qps']
 	output: 存放返回值，list
 	'''
-	cs = CommandSender(dev_ip)
+	cs = CommandSender(dev_ip, user, password)
 	if cs.islogin():
-		commands = [' '.join(['show run interface', interface]) for interface in interfaces]
+		commands = [' '.join([cmd, interface]) for interface in interfaces]
+		print(commands)
 		commands_return = [cs.SendCommand(command) for command in commands]
 		cs.close()
 		
@@ -85,19 +87,39 @@ def find_sth(find_from, expression, not_found_return):
 		return not_found_return
 
 if __name__ == '__main__':
-	path = r'D:\softerware backup\python\run once\get_ip'
-	input_info = read_txt(os.path.join(path, 'input.txt'))
-	output= []
-	#查询表达式
-	expressions = ['description (\S+)','ip address (\S+)','ip address \S+ (\S+)','service-policy output (\S+)']
-	#查询为空返回值
-	not_found_return = ['not_found_description','not_found_address','not_found_mask','not_found_QOS']		
-	threads = [Thread(target=one_device_search, args=(dev_ip, input_info[dev_ip], expressions, not_found_return, output)) for dev_ip in input_info]
-	for i in threads:
-		i.start()
-	for i in threads:
-		i.join()
+	if False:
+		path = r'D:\softerware backup\python\run once\get_ip'
+		input_info = read_txt(os.path.join(path, 'input.txt'))
+		output= []
+		#查询表达式
+		expressions = ['description (\S+)','ip address (\S+)','ip address \S+ (\S+)','service-policy output (\S+)']
+		#查询为空返回值
+		not_found_return = ['not_found_description','not_found_address','not_found_mask','not_found_QOS']		
+		threads = [Thread(target=one_device_search, args=(dev_ip, input_info[dev_ip], expressions, not_found_return, output)) for dev_ip in input_info]
+		for i in threads:
+			i.start()
+		for i in threads:
+			i.join()
+		write_xls(os.path.join(path, 'output.xlsx'), output)
 
-#	print(output)
-	write_xls(os.path.join(path, 'output.xlsx'), output)
+	else:
+		config = configparser.ConfigParser()
+		config.read(os.path.join(os.getcwd(), 'config'))
+		path = config['device_info']['path']
+		input_info = read_txt(path)
+		output = []
+
+		expressions = [config['expressions'][key] for key in config['expressions']]
+		not_found_return = [config['not_found_return'][key] for key in config['not_found_return']]
+
+		threads = [Thread(target=one_device_search, args=(dev_ip, config['telnet_info']['username'], config['telnet_info']['password'],
+			input_info[dev_ip], expressions, not_found_return, config['command']['command'], output)) for dev_ip in input_info]
+
+		for i in threads:
+			i.start()
+		for i in threads:
+			i.join()
+
+		write_xls(os.path.join(os.getcwd(), 'output.xlsx'), output)
+
 
