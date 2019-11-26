@@ -3,4 +3,5 @@
  
 Brief Guide:  
  This script is a useful kit for getting multiple devices and multiple interfaces infomation  
- input.txt is a input file example, the first column is the device mgt address and the second column is the interface from which you want to gather information.  
+ 1.edit input.txt: device mgt address and interface, one pair in each line.
+ 2.configure the config file and run main.py
