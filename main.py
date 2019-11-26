@@ -87,39 +87,23 @@ def find_sth(find_from, expression, not_found_return):
 		return not_found_return
 
 if __name__ == '__main__':
-	if False:
-		path = r'D:\softerware backup\python\run once\get_ip'
-		input_info = read_txt(os.path.join(path, 'input.txt'))
-		output= []
-		#查询表达式
-		expressions = ['description (\S+)','ip address (\S+)','ip address \S+ (\S+)','service-policy output (\S+)']
-		#查询为空返回值
-		not_found_return = ['not_found_description','not_found_address','not_found_mask','not_found_QOS']		
-		threads = [Thread(target=one_device_search, args=(dev_ip, input_info[dev_ip], expressions, not_found_return, output)) for dev_ip in input_info]
-		for i in threads:
-			i.start()
-		for i in threads:
-			i.join()
-		write_xls(os.path.join(path, 'output.xlsx'), output)
+	config = configparser.ConfigParser()
+	config.read(os.path.join(os.getcwd(), 'config'))
+	path = config['device_info']['path']
+	input_info = read_txt(path)
+	output = []
 
-	else:
-		config = configparser.ConfigParser()
-		config.read(os.path.join(os.getcwd(), 'config'))
-		path = config['device_info']['path']
-		input_info = read_txt(path)
-		output = []
+	expressions = [config['expressions'][key] for key in config['expressions']]
+	not_found_return = [config['not_found_return'][key] for key in config['not_found_return']]
 
-		expressions = [config['expressions'][key] for key in config['expressions']]
-		not_found_return = [config['not_found_return'][key] for key in config['not_found_return']]
+	threads = [Thread(target=one_device_search, args=(dev_ip, config['telnet_info']['username'], config['telnet_info']['password'],
+		input_info[dev_ip], expressions, not_found_return, config['command']['command'], output)) for dev_ip in input_info]
 
-		threads = [Thread(target=one_device_search, args=(dev_ip, config['telnet_info']['username'], config['telnet_info']['password'],
-			input_info[dev_ip], expressions, not_found_return, config['command']['command'], output)) for dev_ip in input_info]
+	for i in threads:
+		i.start()
+	for i in threads:
+		i.join()
 
-		for i in threads:
-			i.start()
-		for i in threads:
-			i.join()
-
-		write_xls(os.path.join(os.getcwd(), 'output.xlsx'), output)
+	write_xls(os.path.join(os.getcwd(), 'output.xlsx'), output)
 
 
