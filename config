@@ -1,0 +1,24 @@
+#telnet_info is used to telnet the devices to fech information
+[telnet_info]
+#username = xxx
+#password = xxx
+
+#device_info is a file path which conatins the address and interface pair.
+[device_info]
+#path = D:\PG\GitHub\repo\get_dev_info\get-dev-info\input.txt
+
+#expressions are python regular expressions to find the target info,
+#you colud add as many as you want, the options are whatever.
+[expressions]
+#1 = description (\S+)
+#2 = address is (\S+)
+
+#not_found_return is used when the regular expressions fail to find the information,
+#the number of options shoud be as many as the expressions have.
+[not_found_return]
+#1 = not_found_description
+#2 = not_found_address
+
+#command is the real cli command to fech from the device, the interface from the device_info will automated append behind the command.
+[command]
+#command = show interface
